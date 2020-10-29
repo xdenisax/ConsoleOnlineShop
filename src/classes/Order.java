@@ -1,21 +1,20 @@
 package classes;
 
-import java.util.Date;
 import java.util.List;
 
 public class Order {
-	private Date date;
+	private String date;
 	private List<Product> products;
 	private float totalPrice;
 	
-	public Order(Date date, List<Product> products, float totalPrice) {
+	public Order(String date, List<Product> products, float totalPrice) {
 		super();
 		this.date = date;
 		this.products = products;
 		this.totalPrice = totalPrice;
 	}
 	
-	public Date getDate() {
+	public String getDate() {
 		return date;
 	}
 	

@@ -37,6 +37,39 @@ public class User {
 		return orderHistory;
 	}
 	
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public void setOrderHistory(List<Order> orderHistory) {
+		this.orderHistory = orderHistory;
+	}
+
+	@Override
+	public String toString() {
+		int ordersNo = 0;
+		if(orderHistory!=null) {
+			ordersNo = orderHistory.size();
+		}
+		return "\nPrenume: " + firstName 
+				+ "\nNume: " + lastName 
+				+ "\nAdresa: " + address 
+				+ "\nNumar de telefon: "+ phoneNumber 
+				+ "\nComenzi: " + ordersNo;
+	}
 	
 	
 }

@@ -3,9 +3,9 @@ package classes;
 public class Product {
 	private String name;
 	private String description;
-	private int[] prices;
+	private float[] prices;
 
-	public Product(String name, String description, int[] prices) {
+	public Product(String name, String description, float[] prices) {
 		super();
 		this.name = name;
 		this.description = description;
@@ -20,7 +20,7 @@ public class Product {
 		return description;
 	}
 	
-	public int[] getPrices() {
+	public float[] getPrices() {
 		return prices;
 	}
 }
