@@ -25,4 +25,11 @@ public class Order {
 	public float getTotalPrice() {
 		return totalPrice;
 	}
+
+	@Override
+	public String toString() {
+		return "Comanda din " + date + " contine " + products.size() + " produse in valoare de " + totalPrice + " lei.";
+	}
+	
+	
 }

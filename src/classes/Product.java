@@ -3,13 +3,13 @@ package classes;
 public class Product {
 	private String name;
 	private String description;
-	private float[] prices;
-
-	public Product(String name, String description, float[] prices) {
+	private float price;
+	
+	public Product(String name, String description, float price) {
 		super();
 		this.name = name;
 		this.description = description;
-		this.prices = prices;
+		this.price=price;
 	}
 	
 	public String getName() {
@@ -20,7 +20,14 @@ public class Product {
 		return description;
 	}
 	
-	public float[] getPrices() {
-		return prices;
+	public float getPrice() {
+		return price;
 	}
+
+	@Override
+	public String toString() {
+		return name  + "\n"  + description + "\nPret:  " + price + "lei";
+	}
+	
+	
 }

@@ -1,9 +1,6 @@
 package main;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -11,36 +8,40 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
+import Utils.Statistics;
 import Utils.Validations;
 import classes.Order;
 import classes.Product;
 import classes.User;
 
 public class Program {
-	private final static String principalMenu[] = {"Iesire", "Magazin", "Cont personal"};
+	private final static String principalMenu[] = {"Iesire", "Magazin", "Cont personal", "Cos", "Statistici"};
 	private final static String personalAccount[] = {"Inapoi" , "Prenume", "Nume", "Adresa", "Numar de telefon", "Comenzi"};
+	private final static String cartOptions[] = {"Inapoi","Adauga in cos"};
 	private final static String buyOptions[] = {"Inapoi","Cumpara"};
 	private final static String editOptions[] = {"Inapoi","Editeaza"};
-	private static String[] products;
+	private static String[] productsMenu;
+	private static ArrayList<Product> productsInfo = new ArrayList<Product>();
 	private static Stack<String[]> menuNesting = new Stack<String[]>();
+	private static ArrayList<Product> cart;
 	private static User user;
 	private static int editAtIndex;
+	private static int buyAtIndex;
 	private static Scanner scanner = new Scanner(System.in);
 	
 	public static void main(String[] args) {
 		readUserData();
 		readProducts();
+		if(user!=null) {
+			menuNesting.push(principalMenu);
+			showMenuOptions(menuNesting.lastElement());	
+		}
 		launchApp();
 	}
 	
@@ -53,17 +54,22 @@ public class Program {
 			br = new BufferedReader(new FileReader(file));
 			while ((st = br.readLine()) != null) {
 				prods.add(st);
+				String name = st;
+				String description = br.readLine();
+				float price = Float.parseFloat(br.readLine());
+				productsInfo.add(new Product(name, description, price));
 			}
 		} catch (FileNotFoundException e1) {
 			System.out.println("Eroare la incarcarea produselor.");
 		} catch (IOException e) {
 			System.out.println("Eroare la incarcarea produselor.");
 		} 
-		products = new String[prods.size()+1];
-		products[0]="Inapoi";
+		
+		productsMenu = new String[prods.size()+1];
+		productsMenu[0]="Inapoi";
 		int i=1;
 		for(String prod : prods) {
-			products[i] = prod;
+			productsMenu[i] = prod;
 			i++;
 		}
 	}
@@ -73,7 +79,6 @@ public class Program {
 	   
 		try (	FileInputStream fileReader = new FileInputStream(fileName);
 				DataInputStream dis = new DataInputStream(fileReader)) {
-		      String line;
 		      if(dis.available()>0) {
 					String firstName =  dis.readUTF();
 					String lastName = dis.readUTF();
@@ -86,15 +91,11 @@ public class Program {
 						float totalPrice = dis.readFloat();
 						List<Product> products = new ArrayList<Product>();
 						
-						while((line = dis.readUTF()) != null) {
-							String name = line;
+						while(dis.available()>0) {
+							String name = dis.readUTF();
 							String description = dis.readUTF();
-							String[] pricesStrings = dis.readUTF().split(" ");
-							float[] prices = new float[pricesStrings.length];
-							for(int i=0; i<pricesStrings.length; i++) {
-								prices[i] = Float.parseFloat(pricesStrings[i]);
-							}
-							Product product = new Product(name, description, prices);
+							float price = dis.readFloat();							
+							Product product = new Product(name, description, price);
 							products.add(product);
 						}
 						Order order = new Order(date, products, totalPrice);
@@ -112,9 +113,11 @@ public class Program {
 		if(user == null) {
 			configureNewUser();
 			storeUserInFile();
-		}else {
 			menuNesting.push(principalMenu);
-			showMenuOptions(menuNesting.lastElement());
+			showMenuOptions(menuNesting.lastElement());	
+        	launchApp();
+		}else {
+			cart = new ArrayList<Product>();
 			while(!menuNesting.isEmpty()) {
 			    String selectedOption;
 			    int index = -1;
@@ -135,6 +138,7 @@ public class Program {
 				}
 			}
 			scanner.close();
+			updatePersistentData();
 			System.out.println("Multumim pentru vizita!");
 		}
 	}
@@ -195,19 +199,17 @@ public class Program {
         	dos.writeUTF(user.getAddress()+"\n");
         	dos.writeUTF(user.getPhoneNumber()+"\n");
         	
-        	for(Order order : user.getOrderHistory()) {
-        		dos.writeUTF(order.getDate()+"\n");
-        		dos.writeFloat(order.getTotalPrice());
-        		for(Product product : order.getProducts()) {
-            		dos.writeUTF("\n"+product.getName()+"\n");
-            		dos.writeUTF(product.getDescription()+"\n");
-            		for(int i=0; i<product.getPrices().length; i++) {
-                		dos.writeFloat(product.getPrices()[i]);
+        	if(user.getOrderHistory()!=null) {
+            	for(Order order : user.getOrderHistory()) {
+            		dos.writeUTF(order.getDate()+"\n");
+            		dos.writeFloat(order.getTotalPrice());
+            		for(Product product : order.getProducts()) {
+                		dos.writeUTF(product.getName()+"\n");
+                		dos.writeUTF(product.getDescription()+"\n");
+                    	dos.writeFloat(product.getPrice());
             		}
-            		
-        		}
+            	}   		
         	}
-        	launchApp();
         } catch (IOException e1) {
 			System.out.println("Eroare la scrierea in fisier a datelor utilizatorului.");
 		}
@@ -220,6 +222,7 @@ public class Program {
 		try {
 			selectedIndex = Integer.parseInt(selectedOption);
 			if(selectedIndex < minIndex || selectedIndex > maxIndex) {
+				selectedIndex=-1;
 				throw new Exception();
 			}
 		} catch (Exception error) {
@@ -231,16 +234,31 @@ public class Program {
 	static String[] getMenuForUserOption(int index, String[] menu) {
 		switch(menu[index].split(" ")[0]) {
 			case "Magazin": {
-				return products;
+				return productsMenu;
 			}
 			case "Cont": {
 				return personalAccount;
 			}
-			case "Ecler":{
+			case "Cos": {
+				System.out.println("Aveti "+ cart.size() + " produse in cos.");
+				for(Product product: cart) {
+					System.out.println(product.toString());
+				}
 				return buyOptions;
 			}
+			case "Statistici": {
+				showStatistics();
+				return new String[0];				
+			}
+			case "Ecler":{
+				System.out.println(productsInfo.get(index-1).toString());
+				buyAtIndex = index-1;
+				return cartOptions;
+			}
 			case "Cheesecake": {
-				return buyOptions;
+				System.out.println(productsInfo.get(index-1).toString());
+				buyAtIndex = index-1;
+				return cartOptions;
 			}
 			case "Prenume": {
 				System.out.println("__________________________________\n"
@@ -267,11 +285,32 @@ public class Program {
 				return editOptions;				
 			}
 			case "Comenzi": {
-				
+				if(user.getOrderHistory().size() > 0 ) {
+					for(Order order : user.getOrderHistory()) {
+						System.out.println(order.toString());
+					}
+				}else {
+					System.out.println("0 comenzi plasate.");
+				}
+				return new String[0];
 			}
 			case "Editeaza": {
 				menuNesting.pop();
 				edit( menuNesting.lastElement()[editAtIndex]);
+				return new String[0];
+			}
+			case "Adauga": {
+				menuNesting.pop();
+				addToCart(productsInfo.get(buyAtIndex));
+				return new String[0];
+			}
+			case "Cumpara": {
+				menuNesting.pop();
+				if(cart.size() > 0) {
+					buy();
+				}else {
+					System.out.println("Nu aveti nimic in cos.");
+				}
 				return new String[0];
 			}
 			default: {
@@ -280,7 +319,7 @@ public class Program {
 		}
 		
 	}
-	
+	//4 
 	static void edit(String field) {
 		System.out.println("Actualizati " + field.toLowerCase() + ":");
 		String input = scanner.nextLine();
@@ -317,35 +356,45 @@ public class Program {
 		}
 	}
 	
+	static void addToCart(Product productWanted) {
+		cart.add(productWanted);
+		System.out.println("Produs adaugat in cos!");
+	}
+	
+	static void buy() {
+		float total = 0;
+		for(Product product : cart ) {
+			total += product.getPrice();
+		}
+		Order order = new Order(java.time.LocalDate.now().toString(), cart, total );
+		user.getOrderHistory().add(order);
+		cart = new ArrayList<Product>();
+		System.out.println("Comanda plasata!\n" + order.toString());
+	}
+	
+	static void showStatistics() {
+		if(user.getOrderHistory().size() > 0) {	
+			Statistics stats = new Statistics();
+			stats.doStatistics(user);
+			System.out.println(
+					"Numarul mediu de produse/comanda: " + stats.getAverageNumberOfProducts() 
+					+ "\nPretul mediu/comanda: " + stats.getAverageOrderPrice() + " lei"
+					+"\nProdusul preferat: " + stats.getFavouriteProduct().getName() 
+					+ " cumparat de " +  stats.getNumberFavProduct() + " ori");
+		}else {
+			System.out.println("Nu exista comenzi care pot fi analizate.");
+		}
+	}
 	static void doActionsAccordingToMenuChoice(){
 		System.out.println("__________________________________");
 		showMenuOptions(menuNesting.lastElement());
 		System.out.println("__________________________________");
 	}
-	
-//	static void handlePersonalAccountChoice(Scanner scanner) {
-//		showMenuOptions(personalAccount);
-//	    String selectedOption = scanner.nextLine();
-//		int selectedIndex = checkIndex(0, personalAccount.length, selectedOption);
-//		
-//		switch(selectedIndex) {
-//			case -1: 
-//				showMenuOptions(personalAccount);
-//				break;
-//			case  0: 
-//				System.out.println(personalAccount[0]);
-//				break;
-//			case 1:
-//				System.out.println("Magazin");
-//				break;
-//			case 2:
-//				handlePersonalAccountChoice(scanner);
-//				break;
-//		}
-//		
+
+	static void updatePersistentData() {
+		storeUserInFile();
 		
-		
-//	}
+	}
 	
 	static void showMenuOptions(String[] menu) {
 		for(int i=0; i < menu.length; i++) {
@@ -353,34 +402,5 @@ public class Program {
 		}
 	    System.out.println("Introduceti numarul meniului dorit.");
 	}
-	
-	
-	
-//	boolean isAppOpen = true;
-//	Scanner scanner = new Scanner(System.in);
-//    String selectedOption;
-//    
-//	while(isAppOpen) {
-//		showMenuOptions(principalMenu);
-//		selectedOption = scanner.nextLine();
-//		int selectedIndex = checkIndex(0, principalMenu.length, selectedOption);
-//		
-//		switch(selectedIndex) {
-//			case -1: 
-//				showMenuOptions(principalMenu);
-//				break;
-//			case  0: 
-//				isAppOpen = false;
-//				System.out.println("Aplicatie inchisa..");
-//				break;
-//			case 1:
-//				System.out.println("Magazin");
-//				break;
-//			case 2:
-//				handlePersonalAccountChoice(scanner);
-//				break;
-//		}
-//		
-//	}
-//	scanner.close();
+
 }
