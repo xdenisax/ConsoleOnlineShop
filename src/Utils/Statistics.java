@@ -11,8 +11,8 @@ import classes.Product;
 import classes.User;
 
 public class Statistics {
-	private HashMap<Product, Integer> topProducts = new HashMap<Product, Integer>();
-	private Product favouriteProduct;
+	private HashMap<String, Integer> topProducts = new HashMap<String, Integer>();
+	private String favouriteProduct;
 	private int numberFavProduct;
 	private float averageOrderPrice;
 	private float averageNumberOfProducts;
@@ -24,24 +24,26 @@ public class Statistics {
 				totalValue += order.getTotalPrice();
 				totalProducts += order.getProducts().size();
 				for(Product product : order.getProducts()) {
-					if(this.topProducts.containsKey(product)) {
-						this.topProducts.put(product, this.topProducts.get(product) + 1);
-					}else {
-						this.topProducts.put(product, 1);
-					}
+					topProducts.merge(product.getName(), 1, Integer::sum);
+//					if(this.topProducts.containsKey(product)) {
+//						this.topProducts.put(product, this.topProducts.get(product) + 1);
+//					}else {
+//						this.topProducts.put(product, 1);
+//					}
 				}
 			}
-			Stream<Map.Entry<Product, Integer>> sorted =
+			System.out.println();
+			Stream<Map.Entry<String, Integer>> sorted =
 					topProducts.entrySet().stream()
 				       .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
-			java.util.Map.Entry<Product, Integer> entry = sorted.findFirst().get();
+			java.util.Map.Entry<String, Integer> entry = sorted.findFirst().get();
 			this.favouriteProduct = entry.getKey();
 			this.numberFavProduct = entry.getValue();
 			this.averageNumberOfProducts = totalProducts / user.getOrderHistory().size();
 			this.averageOrderPrice = totalValue / user.getOrderHistory().size();
 	}
 
-	public Product getFavouriteProduct() {
+	public String getFavouriteProduct() {
 		return favouriteProduct;
 	}
 
