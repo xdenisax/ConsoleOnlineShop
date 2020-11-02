@@ -25,7 +25,7 @@ public class Program {
 	private final static String principalMenu[] = {"Iesire", "Magazin", "Cont personal", "Cos", "Statistici"};
 	private final static String personalAccount[] = {"Inapoi" , "Prenume", "Nume", "Adresa", "Numar de telefon", "Comenzi"};
 	private final static String cartOptions[] = {"Inapoi","Adauga in cos"};
-	private final static String buyOptions[] = {"Inapoi","Cumpara"};
+	private final static String buyOptions[] = {"Inapoi", "Elimina", "Cumpara"};
 	private final static String editOptions[] = {"Inapoi","Editeaza"};
 	private static String[] productsMenu;
 	private static ArrayList<Product> productsInfo = new ArrayList<Product>();
@@ -47,7 +47,7 @@ public class Program {
 	}
 	
 	static void readProducts() {
-		File file = new File("E:\\MASTER\\PPOO\\ConsoleOnlineShop\\src\\products.txt"); 
+		File file = new File("products.txt"); 
 		BufferedReader br;
 		String st; 
 		ArrayList<String> prods = new ArrayList<String>();
@@ -88,7 +88,7 @@ public class Program {
 	}
 	
 	static void readUserData() {
-		String fileName = "E:\\MASTER\\PPOO\\ConsoleOnlineShop\\src\\user.txt";
+		String fileName = "user.txt";
 	   
 		try (	FileInputStream fileReader = new FileInputStream(fileName);
 				DataInputStream dis = new DataInputStream(fileReader)) {
@@ -235,7 +235,7 @@ public class Program {
 	
 	static void storeUserInFile() {
         try (
-        		FileOutputStream fileWriter = new FileOutputStream("E:\\MASTER\\PPOO\\ConsoleOnlineShop\\src\\user.txt");
+        		FileOutputStream fileWriter = new FileOutputStream("user.txt");
         		DataOutputStream dos = new DataOutputStream(fileWriter)){
         	dos.writeUTF(user.getFirstName());
         	dos.writeUTF(user.getLastName());
@@ -275,6 +275,22 @@ public class Program {
 		return selectedIndex;
 	}
 	
+	static int checkIndexForList(String selectedOption, ArrayList<Product> menu) {
+		int selectedIndex = -1;
+		int minIndex = 0;
+		int maxIndex = menu.size() - 1;
+		try {
+			selectedIndex = Integer.parseInt(selectedOption);
+			if(selectedIndex < minIndex || selectedIndex > maxIndex) {
+				selectedIndex=-1;
+				throw new Exception();
+			}
+		} catch (Exception error) {
+		    System.out.println("Introduceti o optiune valida.");
+		}
+		return selectedIndex;
+	}
+	
 	static String[] getMenuForUserOption(int index, String[] menu) {
 		switch(menu[index].split(" ")[0]) {
 			case "Magazin": {
@@ -284,10 +300,13 @@ public class Program {
 				return personalAccount;
 			}
 			case "Cos": {
-				System.out.println("Aveti "+ cart.size() + " produse in cos.");
-				for(Product product: cart) {
-					System.out.println(product.toString());
-				}
+				System.out.println("Aveti "+ cart.size() + " produse in cos.\n");
+				float total = showCart();
+				System.out.println("\nTotal: "+ total + "lei\n");
+				System.out.println("\nDatele dumneavoastra pentru livrare sunt: \n" 
+									+ "Telefon: "+ user.getPhoneNumber() + "\n"
+									+ "Adresa: "+ user.getAddress() +"\n");
+				
 				return buyOptions;
 			}
 			case "Statistici": {
@@ -357,6 +376,11 @@ public class Program {
 				}
 				return new String[0];
 			}
+			case "Elimina": {
+				removeFromCart();
+				return buyOptions;
+			}
+			
 			default: {
 				return menu;
 			}
@@ -404,6 +428,26 @@ public class Program {
 	static void addToCart(Product productWanted) {
 		cart.add(productWanted);
 		System.out.println("Produs adaugat in cos!");
+	}
+	
+	static void removeFromCart() {
+		Scanner scanner = new Scanner(System.in);
+		String selectedOption;
+		System.out.println("Introduceti numarul produsului pe care doriti sa-l eliminati: ");
+		int index = -1;
+		while( index < 0) {
+			selectedOption = scanner.next();
+			index = checkIndexForList(selectedOption, cart);	
+		}
+		System.out.println("\n============================================\nAti eliminat: \n\n" + cart.get(index).toString());
+		cart.remove(index);
+		
+		if(cart.size()>0) {
+			System.out.println("\n============================================\nAcum, cosul dumneavoastra este compus din: \n");	
+		} else {
+			System.out.println("\n============================================\nAcum, cosul dumneavostra este gol.");
+		}
+		showCart();
 	}
 	
 	static void buy() {
@@ -464,4 +508,12 @@ public class Program {
 	    System.out.println("Introduceti numarul meniului dorit.");
 	}
 
+	static float showCart() {
+		float total = 0;
+		for( int i=0; i<cart.size(); i++) {
+			System.out.println(i +": " +cart.get(i).toString()+ "\n");
+			total+=cart.get(i).getPrice();
+		}
+		return total;
+	}
 }

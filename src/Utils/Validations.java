@@ -38,16 +38,18 @@ public class Validations {
 	}
 	
 	public static boolean isNumberValid(String input) {
-		if(!isNumeric(input)) {
-			System.out.println("Numarul de telefon trebuie sa contina doar cifre.");
+		try {
+			if(!isNumeric(input)) {
+				throw new IllegalArgumentException("Numarul de telefon trebuie sa contina doar cifre.");
+			}
+			if(input.length() != 10) {
+				throw new IllegalArgumentException("Introduceti un numar de telefon cu 10 cifre.");
+			}	
+		} catch(Exception e) {
+			System.out.println(e.getMessage());
 			return false;
 		}
-		
-		if(input.length() != 10) {
-			System.out.println("Introduceti un numar de telefon cu 10 cifre.");
-			return false;
-		}
-		
+
 		return true;		
 	}
 	

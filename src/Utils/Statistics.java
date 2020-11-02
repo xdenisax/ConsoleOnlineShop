@@ -25,11 +25,6 @@ public class Statistics {
 				totalProducts += order.getProducts().size();
 				for(Product product : order.getProducts()) {
 					topProducts.merge(product.getName(), 1, Integer::sum);
-//					if(this.topProducts.containsKey(product)) {
-//						this.topProducts.put(product, this.topProducts.get(product) + 1);
-//					}else {
-//						this.topProducts.put(product, 1);
-//					}
 				}
 			}
 			System.out.println();
