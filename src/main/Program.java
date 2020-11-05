@@ -448,6 +448,9 @@ public class Program {
 			System.out.println("\n============================================\nAcum, cosul dumneavostra este gol.");
 		}
 		showCart();
+		if(menuNesting.lastElement()[0] == buyOptions[0]) {
+			menuNesting.pop();	
+		}
 	}
 	
 	static void buy() {

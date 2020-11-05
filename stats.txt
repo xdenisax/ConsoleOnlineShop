@@ -1,4 +1,4 @@
-1.0
-20.0
-Cheesecake ciocolata neagra
-1
+3.0
+60.0
+Cheesecake ciocolata cu lapte si alune
+2
